@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aletheia | Sovereign Intelligence Terminal</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000011;
+      color: #d4af37;
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+    header {
+      text-align: center;
+      padding: 60px 0 40px;
+      border-bottom: 1px solid #1a1a3e;
+    }
+    h1 {
+      font-size: 3rem;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      color: #d4af37;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    }
+    .subtitle {
+      color: #4a90e2;
+      font-size: 0.9rem;
+      letter-spacing: 4px;
+      margin-top: 15px;
+      text-transform: uppercase;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 50px;
+    }
+    .panel {
+      background: linear-gradient(135deg, #000011 0%, #0a0a1f 100%);
+      border: 1px solid #1a1a3e;
+      border-radius: 4px;
+      padding: 30px;
+      position: relative;
+    }
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #d4af37, transparent);
+    }
+    .panel-title {
+      color: #4a90e2;
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-title::before {
+      content: '◆';
+      color: #d4af37;
+    }
+    .treasury-display {
+      font-size: 2.5rem;
+      color: #d4af37;
+      text-align: center;
+      padding: 30px 0;
+    }
+    .treasury-label {
+      font-size: 0.7rem;
+      color: #4a90e2;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .research-content {
+      min-height: 300px;
+    }
+    .locked-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      text-align: center;
+    }
+    .lock-icon {
+      font-size: 3rem;
+      color: #d4af37;
+      margin-bottom: 20px;
+    }
+    .unlock-btn {
+      background: transparent;
+      border: 1px solid #d4af37;
+      color: #d4af37;
+      padding: 15px 40px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .unlock-btn:hover {
+      background: #d4af37;
+      color: #000011;
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+    }
+    .unlock-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .research-data {
+      display: none;
+    }
+    .research-data.active { display: block; }
+    .data-item {
+      padding: 15px 0;
+      border-bottom: 1px solid #1a1a3e;
+    }
+    .data-item:last-child { border-bottom: none; }
+    .data-label {
+      color: #4a90e2;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .data-value {
+      color: #d4af37;
+      font-size: 0.9rem;
+    }
+    .loading {
+      color: #4a90e2;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #4a90e2;
+      border-radius: 50%;
+      margin-right: 10px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .log-entry {
+      font-size: 0.75rem;
+      color: #666;
+      padding: 8px 0;
+      border-bottom: 1px solid #0a0a1f;
+    }
+    .full-width { grid-column: 1 / -1; }
+    .geometric-accent {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      border: 1px solid rgba(212, 175, 55, 0.1);
+      transform: rotate(45deg);
+    }
+    .geometric-accent.top-right { top: 20px; right: 20px; }
+    .geometric-accent.bottom-left { bottom: 20px; left: 20px; }
+    .error-state {
+      color: #e74c3c;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Aletheia</h1>
+      <div class="subtitle">Sovereign Intelligence Terminal</div>
+    </header>
+    
+    <div class="grid">
+      <div class="panel">
+        <div class="geometric-accent top-right"></div>
+        <div class="geometric-accent bottom-left"></div>
+        <div class="panel-title"><span class="status-indicator"></span>Treasury</div>
+        <div class="treasury-display" id="treasuryValue">$0.00</div>
+        <div class="treasury-label">USDC Accumulated</div>
+      </div>
+      
+      <div class="panel">
+        <div class="panel-title">System Status</div>
+        <div id="systemStatus">
+          <div class="data-item">
+            <div class="data-label">Network</div>
+            <div class="data-value">Base Mainnet</div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">Sweep Threshold</div>
+            <div class="data-value">$10.00 USDC</div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">Last Sweep</div>
+            <div class="data-value" id="lastSweep">Pending</div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">Status</div>
+            <div class="data-value">Operational</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel full-width">
+        <div class="panel-title">Deep Research Feed</div>
+        <div class="research-content">
+          <div class="locked-overlay" id="lockedOverlay">
+            <div class="lock-icon">🔒</div>
+            <div style="color: #4a90e2; margin-bottom: 20px; font-size: 0.8rem; letter-spacing: 2px;">
+              DEEP RESEARCH ACCESS
+            </div>
+            <div style="color: #666; margin-bottom: 30px; font-size: 0.7rem;">
+              $0.10 USDC on Base
+            </div>
+            <button class="unlock-btn" id="unlockBtn">Unlock Access</button>
+          </div>
+          <div class="research-data" id="researchData">
+            <div class="loading" id="loadingIndicator">Processing payment...</div>
+            <div id="researchContent"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel full-width">
+        <div class="panel-title">Sweep Logs</div>
+        <div id="sweepLogs">
+          <div class="log-entry">System initialized — awaiting first sweep cycle</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const treasuryValue = document.getElementById('treasuryValue');
+    const lastSweep = document.getElementById('lastSweep');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const lockedOverlay = document.getElementById('lockedOverlay');
+    const researchData = document.getElementById('researchData');
+    const researchContent = document.getElementById('researchContent');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const sweepLogs = document.getElementById('sweepLogs');
+    
+    async function loadTreasury() {
+      try {
+        const result = await bankr.invokeScript({ script: 'getResearchFeed', args: {} });
+        if (result.value) {
+          treasuryValue.textContent = '$' + result.value.treasury.toFixed(2);
+          lastSweep.textContent = result.value.lastSweep ? new Date(result.value.lastSweep).toLocaleString() : 'Pending';
+          if (result.value.logs && result.value.logs.length > 0) {
+            sweepLogs.innerHTML = result.value.logs.map(function(log) {
+              return '<div class="log-entry">' + log + '</div>';
+            }).join('');
+          }
+        }
+      } catch (e) {
+        console.error('treasury load error:', e);
+      }
+    }
+    
+    async function unlockResearch() {
+      unlockBtn.textContent = 'Processing...';
+      unlockBtn.disabled = true;
+      loadingIndicator.style.display = 'block';
+      loadingIndicator.textContent = 'Initiating payment...';
+      
+      try {
+        // step 1: pay via x402 - use the script name as endpoint
+        const paymentResult = await bankr.x402.fetch('unlockResearch', {
+          method: 'GET',
+          maxPaymentUsd: 0.1
+        });
+        
+        if (!paymentResult.ok) {
+          throw new Error('Payment failed: ' + paymentResult.statusText);
+        }
+        
+        loadingIndicator.textContent = 'Payment confirmed — fetching research data...';
+        
+        // step 2: fetch research data (payment already settled via x402)
+        const result = await bankr.invokeScript({ 
+          script: 'unlockResearch', 
+          args: {} 
+        });
+        
+        if (result.value && !result.value.locked) {
+          lockedOverlay.style.display = 'none';
+          researchData.classList.add('active');
+          loadingIndicator.style.display = 'none';
+          
+          var html = '';
+          if (result.value.dexTrends && result.value.dexTrends.length > 0) {
+            html += '<div class="data-item"><div class="data-label">DEX Trends (Base)</div>';
+            result.value.dexTrends.forEach(function(pair) {
+              html += '<div class="data-value">' + pair.baseToken + ' / ' + pair.quoteToken + ' — $' + pair.fdv.toLocaleString() + ' (24h: ' + pair.priceChange + '%)</div>';
+            });
+            html += '</div>';
+          }
+          if (result.value.insights) {
+            html += '<div class="data-item"><div class="data-label">Active Insights</div>';
+            result.value.insights.forEach(function(insight) {
+              html += '<div class="data-value">◇ ' + insight + '</div>';
+            });
+            html += '</div>';
+          }
+          if (result.value.chainMetrics) {
+            html += '<div class="data-item"><div class="data-label">Chain Metrics</div>';
+            html += '<div class="data-value">Updated: ' + new Date(result.value.timestamp).toLocaleString() + '</div>';
+            html += '</div>';
+          }
+          
+          researchContent.innerHTML = html;
+        } else {
+          throw new Error(result.value?.message || 'Access denied');
+        }
+      } catch (e) {
+        console.error('unlock error:', e);
+        loadingIndicator.style.display = 'none';
+        researchData.classList.add('active');
+        researchContent.innerHTML = '<div class="error-state">Payment failed: ' + e.message + '</div>';
+        unlockBtn.textContent = 'Try Again';
+        unlockBtn.disabled = false;
+      }
+    }
+    
+    unlockBtn.addEventListener('click', unlockResearch);
+    loadTreasury();
+    setInterval(loadTreasury, 30000);
+  </script>
+</body>
+</html>
