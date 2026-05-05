@@ -1,0 +1,50 @@
+{
+  "slug": "aletheia",
+  "title": "Aletheia | Sovereign Intelligence Terminal",
+  "description": "A sovereign intelligence terminal displaying live on-chain research and autonomous treasury growth. Access deep research via x402 payment gate.",
+  "tags": ["research", "terminal", "autonomous", "base"],
+  "permissions": [
+    "fetch:http",
+    "read:wallet",
+    "read:chain",
+    "execute:swap",
+    "pay:x402",
+    "write:appdata",
+    "read:appdata"
+  ],
+  "scripts": [
+    "unlockResearch",
+    "getResearchFeed",
+    "treasurySweep",
+    "fetchResearch"
+  ],
+  "publicScripts": ["getResearchFeed"],
+  "publicScriptLimits": [
+    {
+      "name": "getResearchFeed",
+      "value": {
+        "maxHttpCalls": 0,
+        "maxChainReads": 0,
+        "maxExecMs": 1000,
+        "maxReturnBytes": 4096,
+        "perViewerRateLimit": {"rpm": 10, "rph": 100},
+        "perAppRateLimit": {"rph": 1000}
+      }
+    }
+  ],
+  "assets": [],
+  "publicDataKeys": ["treasury_balance", "last_sweep", "sweep_logs"],
+  "secrets": [],
+  "schedule": [
+    {
+      "script": "treasurySweep",
+      "cron": "0 0 * * *",
+      "enabled": true
+    }
+  ],
+  "frontendIdentity": "owner",
+  "x402": {
+    "maxPaymentUsdPerCall": 0.10,
+    "allowedHosts": ["bankr.bot"]
+  }
+}
